@@ -22,10 +22,10 @@ import java.util.HashMap;
 
 public class Provider extends ContentProvider {
 
-    public static String AUTHORITY = "com.aware.plugin.template.provider.xxx"; //change to package.provider.your_plugin_name
+    public static String AUTHORITY = "com.aware.plugin.phonecheck.provider.phonecheck"; //change to package.provider.your_plugin_name
 
     public static final int DATABASE_VERSION = 1; //increase this if you make changes to the database structure, i.e., rename columns, etc.
-    public static final String DATABASE_NAME = "plugin_template.db"; //the database filename, use plugin_xxx for plugins.
+    public static final String DATABASE_NAME = "plugin_phonecheck.db"; //the database filename, use plugin_xxx for plugins.
 
     //Add here your database table names, as many as you need
     public static final String DB_TBL_TEMPLATE = "table_one";
@@ -97,7 +97,7 @@ public class Provider extends ContentProvider {
      * @return
      */
     public static String getAuthority(Context context) {
-        AUTHORITY = context.getPackageName() + ".provider.xxx";
+        AUTHORITY = context.getPackageName() + ".provider.phonecheck";
         return AUTHORITY;
     }
 

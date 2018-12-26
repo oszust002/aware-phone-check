@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">AWARE: Phone Check</string>
+    <string name="plugin_template">Plugin: Phone Check</string>
+</resources>

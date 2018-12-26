@@ -1,2 +1,2 @@
-include ':com.aware.plugin.template'
-//, ':com.aware.plugin.template.lib'
+include ':com.aware.plugin.phonecheck'
+//, ':com.aware.plugin.phonecheck.lib'

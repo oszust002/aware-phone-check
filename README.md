@@ -14,7 +14,7 @@ Broadcast ..., with the following extras:
 
 # Providers
 ##  Template Data
-> content://com.aware.plugin.template.provider.xxx/plugin_template
+> content://com.aware.plugin.phonecheck.provider.phonecheck/plugin_phonecheck
 
 Field | Type | Description
 ----- | ---- | -----------
