@@ -1,4 +1,4 @@
-package com.aware.plugin.template;
+package com.aware.plugin.phonecheck;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;

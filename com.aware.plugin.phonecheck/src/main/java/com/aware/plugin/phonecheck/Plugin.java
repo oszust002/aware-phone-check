@@ -1,9 +1,10 @@
-package com.aware.plugin.template;
+package com.aware.plugin.phonecheck;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.aware.Accelerometer;
 import com.aware.Aware;
@@ -12,6 +13,9 @@ import com.aware.Screen;
 import com.aware.utils.Aware_Plugin;
 
 public class Plugin extends Aware_Plugin {
+
+    public static final String ACTION_AWARE_PLUGIN_PHONE_CHECK = "ACTION_AWARE_PLUGIN_PHONE_CHECK";
+
 
     @Override
     public void onCreate() {
@@ -30,7 +34,17 @@ public class Plugin extends Aware_Plugin {
         CONTEXT_PRODUCER = new ContextProducer() {
             @Override
             public void onContext() {
-                //Broadcast your context here
+                ContentValues context_data = new ContentValues();
+                context_data.put(Provider.PhoneCheck_Data.TIMESTAMP, System.currentTimeMillis());
+                context_data.put(Provider.PhoneCheck_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+
+                if (DEBUG) Log.d(TAG, context_data.toString());
+
+                getContentResolver().insert(Provider.PhoneCheck_Data.CONTENT_URI, context_data);
+
+                Intent sharedContext = new Intent(ACTION_AWARE_PLUGIN_PHONE_CHECK);
+                sendBroadcast(sharedContext);
+
             }
         };
 
@@ -52,7 +66,7 @@ public class Plugin extends Aware_Plugin {
     }
 
     public interface AWARESensorObserver {
-        void onDataChanged(ContentValues data);
+        void onPhoneCheck(ContentValues data);
     }
 
     //This function gets called every 5 minutes by AWARE to make sure this plugin is still running.
@@ -75,7 +89,7 @@ public class Plugin extends Aware_Plugin {
             Accelerometer.setSensorObserver(new Accelerometer.AWARESensorObserver() {
                 @Override
                 public void onAccelerometerChanged(ContentValues contentValues) {
-                    sendBroadcast(new Intent("ACCELEROMETER_DATA").putExtra("data", contentValues));
+                    //TODO KO: Check time between acc and screen on
                 }
             });
 
@@ -83,7 +97,7 @@ public class Plugin extends Aware_Plugin {
             Screen.setSensorObserver(new Screen.AWARESensorObserver() {
                 @Override
                 public void onScreenOn() {
-
+                    //TODO KO: Check time between acc and screen on
                 }
 
                 @Override

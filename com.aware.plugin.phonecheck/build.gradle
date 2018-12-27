@@ -5,7 +5,7 @@ android {
     buildToolsVersion build_tools
 
     defaultConfig {
-        applicationId "com.aware.plugin.template" //EDIT ME
+        applicationId "com.aware.plugin.phonecheck" //EDIT ME
         minSdkVersion minimum_sdk
         targetSdkVersion target_sdk
         versionCode version_code
@@ -22,6 +22,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/proguard/androidx-annotations.pro'
     }
 
     lintOptions {
@@ -54,6 +58,7 @@ dependencies {
     implementation "com.android.support:appcompat-v7:$support_libs"
     implementation "com.android.support:gridlayout-v7:$support_libs"
 
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0-alpha'
     api "com.github.denzilferreira:aware-client:$aware_libs"
 
 }

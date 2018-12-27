@@ -1,4 +1,4 @@
-package com.aware.plugin.template.syncadapters;
+package com.aware.plugin.phonecheck.syncadapters;
 
 import android.app.Service;
 import android.content.Intent;
@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import com.aware.plugin.template.Provider;
+import com.aware.plugin.phonecheck.Provider;
 import com.aware.syncadapters.AwareSyncAdapter;
 
 /**
@@ -27,7 +27,7 @@ public class Template_Sync extends Service {
                 sSyncAdapter.init(
                         Provider.DATABASE_TABLES, Provider.TABLES_FIELDS,
                         new Uri[]{
-                                Provider.TableOne_Data.CONTENT_URI
+                                Provider.PhoneCheck_Data.CONTENT_URI
                         }
                 );
             }

@@ -1,4 +1,4 @@
-package com.aware.plugin.template;
+package com.aware.plugin.phonecheck;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;
@@ -28,7 +28,7 @@ public class Provider extends ContentProvider {
     public static final String DATABASE_NAME = "plugin_phonecheck.db"; //the database filename, use plugin_xxx for plugins.
 
     //Add here your database table names, as many as you need
-    public static final String DB_TBL_TEMPLATE = "table_one";
+    public static final String DB_TBL_PHONECHECK = "phone_check_debug";
 
     //For each table, add two indexes: DIR and ITEM. The index needs to always increment. Next one is 3, and so on.
     private static final int TABLE_ONE_DIR = 1;
@@ -36,7 +36,7 @@ public class Provider extends ContentProvider {
 
     //Put tables names in this array so AWARE knows what you have on the database
     public static final String[] DATABASE_TABLES = {
-        DB_TBL_TEMPLATE
+            DB_TBL_PHONECHECK
     };
 
     //These are columns that we need to sync data, don't change this!
@@ -50,31 +50,25 @@ public class Provider extends ContentProvider {
      * Create one of these per database table
      * In this example, we are adding example columns
      */
-    public static final class TableOne_Data implements AWAREColumns {
-        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + DB_TBL_TEMPLATE);
-        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.com.aware.plugin.template.provider.table_one"; //modify me
-        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.com.aware.plugin.template.provider.table_one"; //modify me
+    public static final class PhoneCheck_Data implements AWAREColumns {
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + DB_TBL_PHONECHECK);
+        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.com.aware.plugin.phonecheck.provider.phonecheck.table_one"; //modify me
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.com.aware.plugin.phonecheck.provider.phonecheck.table_one"; //modify me
 
         //Note: integers and strings don't need a type prefix_
-        public static final String NAME = "name";
-        public static final String BIG_NUMBER = "double_big_number"; //a double_ prefix makes a MySQL DOUBLE column
-        public static final String PICTURE = "blob_picture"; //a blob_ prefix makes a MySQL BLOB column
     }
 
     //Define each database table fields
-    private static final String DB_TBL_TEMPLATE_FIELDS =
-        TableOne_Data._ID + " integer primary key autoincrement," +
-        TableOne_Data.TIMESTAMP + " real default 0," +
-        TableOne_Data.DEVICE_ID + " text default ''," +
-        TableOne_Data.NAME + " text default ''," +
-        TableOne_Data.BIG_NUMBER + " real default 0," +
-        TableOne_Data.PICTURE + " blob default null";
+    private static final String DB_TBL_PHONECHECK_FIELDS =
+        PhoneCheck_Data._ID + " integer primary key autoincrement," +
+        PhoneCheck_Data.TIMESTAMP + " real default 0," +
+        PhoneCheck_Data.DEVICE_ID + " text default ''";
 
     /**
      * Share the fields with AWARE so we can replicate the table schema on the server
      */
     public static final String[] TABLES_FIELDS = {
-            DB_TBL_TEMPLATE_FIELDS
+            DB_TBL_PHONECHECK_FIELDS
     };
 
     //Helper variables for ContentProvider - DO NOT CHANGE
@@ -114,12 +108,9 @@ public class Provider extends ContentProvider {
 
         //Create each table hashmap so Android knows how to insert data to the database. Put ALL table fields.
         tableOneHash = new HashMap<>();
-        tableOneHash.put(TableOne_Data._ID, TableOne_Data._ID);
-        tableOneHash.put(TableOne_Data.TIMESTAMP, TableOne_Data.TIMESTAMP);
-        tableOneHash.put(TableOne_Data.DEVICE_ID, TableOne_Data.DEVICE_ID);
-        tableOneHash.put(TableOne_Data.NAME, TableOne_Data.NAME);
-        tableOneHash.put(TableOne_Data.BIG_NUMBER, TableOne_Data.BIG_NUMBER);
-        tableOneHash.put(TableOne_Data.PICTURE, TableOne_Data.PICTURE);
+        tableOneHash.put(PhoneCheck_Data._ID, PhoneCheck_Data._ID);
+        tableOneHash.put(PhoneCheck_Data.TIMESTAMP, PhoneCheck_Data.TIMESTAMP);
+        tableOneHash.put(PhoneCheck_Data.DEVICE_ID, PhoneCheck_Data.DEVICE_ID);
 
         return true;
     }
@@ -164,11 +155,11 @@ public class Provider extends ContentProvider {
 
             //Add each table DIR case
             case TABLE_ONE_DIR:
-                long _id = database.insert(DATABASE_TABLES[0], TableOne_Data.DEVICE_ID, values);
+                long _id = database.insert(DATABASE_TABLES[0], PhoneCheck_Data.DEVICE_ID, values);
                 database.setTransactionSuccessful();
                 database.endTransaction();
                 if (_id > 0) {
-                    Uri dataUri = ContentUris.withAppendedId(TableOne_Data.CONTENT_URI, _id);
+                    Uri dataUri = ContentUris.withAppendedId(PhoneCheck_Data.CONTENT_URI, _id);
                     getContext().getContentResolver().notifyChange(dataUri, null);
                     return dataUri;
                 }
@@ -219,9 +210,9 @@ public class Provider extends ContentProvider {
 
             //Add each table indexes DIR and ITEM
             case TABLE_ONE_DIR:
-                return TableOne_Data.CONTENT_TYPE;
+                return PhoneCheck_Data.CONTENT_TYPE;
             case TABLE_ONE_ITEM:
-                return TableOne_Data.CONTENT_ITEM_TYPE;
+                return PhoneCheck_Data.CONTENT_ITEM_TYPE;
 
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
