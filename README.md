@@ -1,7 +1,7 @@
-AWARE Plugin: YOUR PLUGIN
+AWARE Plugin: Phone Check
 ==========================
 
-This plugin measures ...
+This plugin measures user phone checking actions, but only those which include phone lifting (actions where only screen was set on are ignored). It bases on accelerometer and screen sensors.
 
 # Settings
 Parameters adjustable on the dashboard and client:

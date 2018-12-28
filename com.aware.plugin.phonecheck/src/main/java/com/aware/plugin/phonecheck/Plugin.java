@@ -3,6 +3,7 @@ package com.aware.plugin.phonecheck;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -10,12 +11,23 @@ import com.aware.Accelerometer;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.Screen;
+import com.aware.providers.Accelerometer_Provider;
 import com.aware.utils.Aware_Plugin;
+
+import java.util.Arrays;
 
 public class Plugin extends Aware_Plugin {
 
     public static final String ACTION_AWARE_PLUGIN_PHONE_CHECK = "ACTION_AWARE_PLUGIN_PHONE_CHECK";
 
+    //TODO: Threshold values
+    private static final long SCREEN_ON_THRESHHOLD = 0;
+    private static final long ACCELEROMETER_SCREEN_DIFF_THRESHOLD = 0;
+    public static final int MINIMAL_ACCELERATION_VALUE = 4;
+
+    private long lastScreenOn = 0;
+
+    private AccelerometerFilter accelerometerFilter = new AccelerometerFilter(0.5f);
 
     @Override
     public void onCreate() {
@@ -24,7 +36,7 @@ public class Plugin extends Aware_Plugin {
         //This allows plugin data to be synced on demand from broadcast Aware#ACTION_AWARE_SYNC_DATA
         AUTHORITY = Provider.getAuthority(this);
 
-        TAG = "AWARE::"+getResources().getString(R.string.app_name);
+        TAG = "AWARE::" + getResources().getString(R.string.app_name);
 
         /**
          * Plugins share their current status, i.e., context using this method.
@@ -44,7 +56,6 @@ public class Plugin extends Aware_Plugin {
 
                 Intent sharedContext = new Intent(ACTION_AWARE_PLUGIN_PHONE_CHECK);
                 sendBroadcast(sharedContext);
-
             }
         };
 
@@ -58,9 +69,11 @@ public class Plugin extends Aware_Plugin {
      * Allow callback to other applications when data is stored in provider
      */
     private static AWARESensorObserver awareSensor;
+
     public static void setSensorObserver(AWARESensorObserver observer) {
         awareSensor = observer;
     }
+
     public static AWARESensorObserver getSensorObserver() {
         return awareSensor;
     }
@@ -85,11 +98,27 @@ public class Plugin extends Aware_Plugin {
              * Example of how to enable accelerometer sensing and how to access the data in real-time for your app.
              * In this particular case, we are sending a broadcast that the ContextCard listens to and updates the UI in real-time.
              */
+//            Aware.setSetting(this, Aware_Preferences.FREQUENCY_ACCELEROMETER_ENFORCE, true);
+            Aware.setSetting(this, Aware_Preferences.FREQUENCY_ACCELEROMETER, 60000);
             Aware.startAccelerometer(this);
             Accelerometer.setSensorObserver(new Accelerometer.AWARESensorObserver() {
                 @Override
                 public void onAccelerometerChanged(ContentValues contentValues) {
-                    //TODO KO: Check time between acc and screen on
+
+                    float[] rawAcceleration = extractRawAcceleration(contentValues);
+                    //TODO KO: Acceleration, orientation, low/high pass filter (continuous kalman?) Use standard accelerometer instead of Aware?
+                    float[] calculate = accelerometerFilter.calculate(rawAcceleration);
+                    float value = calculateAccelerationMagnitude(calculate);
+                    if (value < MINIMAL_ACCELERATION_VALUE) {
+                        return;
+                    }
+
+                    long screenAccelerometerTimeDiff = Math.abs(System.currentTimeMillis() - lastScreenOn);
+
+                    if (screenAccelerometerTimeDiff > ACCELEROMETER_SCREEN_DIFF_THRESHOLD) {
+                        return;
+                    }
+                    CONTEXT_PRODUCER.onContext();
                 }
             });
 
@@ -97,7 +126,12 @@ public class Plugin extends Aware_Plugin {
             Screen.setSensorObserver(new Screen.AWARESensorObserver() {
                 @Override
                 public void onScreenOn() {
-                    //TODO KO: Check time between acc and screen on
+                    //TODO: Filter fast screen on/off during picking
+                    long currentScreenOn = System.currentTimeMillis();
+                    if (currentScreenOn - lastScreenOn < SCREEN_ON_THRESHHOLD) {
+                        return;
+                    }
+                    lastScreenOn = currentScreenOn;
                 }
 
                 @Override
@@ -132,6 +166,17 @@ public class Plugin extends Aware_Plugin {
         }
 
         return START_STICKY;
+    }
+
+    private float calculateAccelerationMagnitude(float[] calculate) {
+        return (float) Math.sqrt(calculate[0] * calculate[0] + calculate[1] * calculate[1] + calculate[2] * calculate[2]);
+    }
+
+    private float[] extractRawAcceleration(ContentValues contentValues) {
+        Float x = (Float) contentValues.get(Accelerometer_Provider.Accelerometer_Data.VALUES_0);
+        Float y = (Float) contentValues.get(Accelerometer_Provider.Accelerometer_Data.VALUES_1);
+        Float z = (Float) contentValues.get(Accelerometer_Provider.Accelerometer_Data.VALUES_2);
+        return new float[]{x, y, z};
     }
 
     @Override
