@@ -21,11 +21,12 @@ public class Plugin extends Aware_Plugin {
     public static final String ACTION_AWARE_PLUGIN_PHONE_CHECK = "ACTION_AWARE_PLUGIN_PHONE_CHECK";
 
     //TODO: Threshold values
-    private static final long SCREEN_ON_THRESHHOLD = 0;
-    private static final long ACCELEROMETER_SCREEN_DIFF_THRESHOLD = 0;
+    private static final long SCREEN_ON_THRESHHOLD = 1500;
+    private static final long ACCELEROMETER_SCREEN_DIFF_THRESHOLD = 300;
     public static final int MINIMAL_ACCELERATION_VALUE = 4;
 
     private long lastScreenOn = 0;
+    private long lastAccelerationRead;
 
     private AccelerometerFilter accelerometerFilter = new AccelerometerFilter(0.5f);
 
@@ -104,20 +105,28 @@ public class Plugin extends Aware_Plugin {
             Accelerometer.setSensorObserver(new Accelerometer.AWARESensorObserver() {
                 @Override
                 public void onAccelerometerChanged(ContentValues contentValues) {
+                    long currentTime = System.currentTimeMillis();
+
+                    if (Math.abs(currentTime - lastAccelerationRead) < 1500) {
+                        return;
+                    }
 
                     float[] rawAcceleration = extractRawAcceleration(contentValues);
                     //TODO KO: Acceleration, orientation, low/high pass filter (continuous kalman?) Use standard accelerometer instead of Aware?
                     float[] calculate = accelerometerFilter.calculate(rawAcceleration);
                     float value = calculateAccelerationMagnitude(calculate);
+
                     if (value < MINIMAL_ACCELERATION_VALUE) {
                         return;
                     }
 
-                    long screenAccelerometerTimeDiff = Math.abs(System.currentTimeMillis() - lastScreenOn);
-
-                    if (screenAccelerometerTimeDiff > ACCELEROMETER_SCREEN_DIFF_THRESHOLD) {
+                    long screenAccelerometerTimeDiff = Math.abs(currentTime - lastScreenOn);
+                    if (screenAccelerometerTimeDiff > ACCELEROMETER_SCREEN_DIFF_THRESHOLD || lastScreenOn == 0) {
                         return;
                     }
+
+                    lastAccelerationRead = currentTime;
+                    Log.d(TAG, "Phone was picked up");
                     CONTEXT_PRODUCER.onContext();
                 }
             });
