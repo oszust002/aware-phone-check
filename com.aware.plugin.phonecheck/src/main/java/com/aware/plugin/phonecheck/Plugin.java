@@ -1,5 +1,6 @@
 package com.aware.plugin.phonecheck;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -15,6 +16,8 @@ import com.aware.providers.Accelerometer_Provider;
 import com.aware.utils.Aware_Plugin;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Plugin extends Aware_Plugin {
 
@@ -22,13 +25,14 @@ public class Plugin extends Aware_Plugin {
 
     //TODO: Threshold values
     private static final long SCREEN_ON_THRESHHOLD = 1500;
-    private static final long ACCELEROMETER_SCREEN_DIFF_THRESHOLD = 300;
+    private static final long ACCELEROMETER_SCREEN_DIFF_THRESHOLD = 2000;
     public static final int MINIMAL_ACCELERATION_VALUE = 4;
 
     private long lastScreenOn = 0;
     private long lastAccelerationRead;
 
     private AccelerometerFilter accelerometerFilter = new AccelerometerFilter(0.5f);
+    private boolean wasPicked;
 
     @Override
     public void onCreate() {
@@ -47,23 +51,30 @@ public class Plugin extends Aware_Plugin {
         CONTEXT_PRODUCER = new ContextProducer() {
             @Override
             public void onContext() {
-                ContentValues context_data = new ContentValues();
-                context_data.put(Provider.PhoneCheck_Data.TIMESTAMP, System.currentTimeMillis());
-                context_data.put(Provider.PhoneCheck_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-
-                if (DEBUG) Log.d(TAG, context_data.toString());
-
-                getContentResolver().insert(Provider.PhoneCheck_Data.CONTENT_URI, context_data);
-
-                Intent sharedContext = new Intent(ACTION_AWARE_PLUGIN_PHONE_CHECK);
-                sendBroadcast(sharedContext);
             }
         };
 
         //Add permissions you need (Android M+).
         //By default, AWARE asks access to the #Manifest.permission.WRITE_EXTERNAL_STORAGE
+    }
 
-        //REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+    private void triggerPhoneCheck() {
+        Log.d(TAG, "Phone was picked up");
+
+        ContentValues context_data = new ContentValues();
+        context_data.put(Provider.PhoneCheck_Data.TIMESTAMP, System.currentTimeMillis());
+        context_data.put(Provider.PhoneCheck_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+
+        if (DEBUG) Log.d(TAG, context_data.toString());
+
+        if (awareSensor != null) {
+            awareSensor.onPhoneCheck(context_data);
+        }
+
+        getContentResolver().insert(Provider.PhoneCheck_Data.CONTENT_URI, context_data);
+
+        Intent sharedContext = new Intent(ACTION_AWARE_PLUGIN_PHONE_CHECK);
+        sendBroadcast(sharedContext);
     }
 
     /**
@@ -112,7 +123,6 @@ public class Plugin extends Aware_Plugin {
                     }
 
                     float[] rawAcceleration = extractRawAcceleration(contentValues);
-                    //TODO KO: Acceleration, orientation, low/high pass filter (continuous kalman?) Use standard accelerometer instead of Aware?
                     float[] calculate = accelerometerFilter.calculate(rawAcceleration);
                     float value = calculateAccelerationMagnitude(calculate);
 
@@ -120,14 +130,12 @@ public class Plugin extends Aware_Plugin {
                         return;
                     }
 
+                    lastAccelerationRead = currentTime;
                     long screenAccelerometerTimeDiff = Math.abs(currentTime - lastScreenOn);
                     if (screenAccelerometerTimeDiff > ACCELEROMETER_SCREEN_DIFF_THRESHOLD || lastScreenOn == 0) {
                         return;
                     }
-
-                    lastAccelerationRead = currentTime;
-                    Log.d(TAG, "Phone was picked up");
-                    CONTEXT_PRODUCER.onContext();
+                    recordPhonePick();
                 }
             });
 
@@ -141,6 +149,11 @@ public class Plugin extends Aware_Plugin {
                         return;
                     }
                     lastScreenOn = currentScreenOn;
+                    long screenAccelerometerTimeDiff = Math.abs(currentScreenOn - lastAccelerationRead);
+                    if (screenAccelerometerTimeDiff > ACCELEROMETER_SCREEN_DIFF_THRESHOLD || lastAccelerationRead == 0) {
+                        return;
+                    }
+                    recordPhonePick();
                 }
 
                 @Override
@@ -175,6 +188,21 @@ public class Plugin extends Aware_Plugin {
         }
 
         return START_STICKY;
+    }
+
+    private void recordPhonePick() {
+        if (wasPicked) {
+            return;
+        }
+
+        triggerPhoneCheck();
+        wasPicked = true;
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                wasPicked = false;
+            }
+        }, ACCELEROMETER_SCREEN_DIFF_THRESHOLD);
     }
 
     private float calculateAccelerationMagnitude(float[] calculate) {

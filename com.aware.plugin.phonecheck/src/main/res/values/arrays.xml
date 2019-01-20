@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="phonecheck_granularity">
+        <item>24</item>
+        <item>7</item>
+    </string-array>
+    <string-array name="phonecheck_granularity_readable">
+        <item>@string/last_24_hours_preference</item>
+        <item>@string/last_7_days_preference</item>
+    </string-array>
+</resources>

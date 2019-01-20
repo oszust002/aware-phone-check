@@ -8,5 +8,11 @@
         android:defaultValue="false"
         android:persistent="true"
         android:summary="Activate/deactivate plugin" />
+    <ListPreference
+        android:defaultValue="@integer/phonecheck_last_24_hours"
+        android:entries="@array/phonecheck_granularity_readable"
+        android:entryValues="@array/phonecheck_granularity"
+        android:key="summary_time_granularity"
+        android:title="@string/summary_time" />
 
 </PreferenceScreen>
